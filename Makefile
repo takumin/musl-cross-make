@@ -23,7 +23,7 @@ MUSL_REPO = git://git.musl-libc.org/musl
 
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 
-DL_CMD = wget -c -O
+DL_CMD = curl -fsSL --retry 10 --retry-connrefused -o
 
 HOST = $(if $(NATIVE),$(TARGET))
 BUILD_DIR = build/$(if $(HOST),$(HOST),local)/$(TARGET)
