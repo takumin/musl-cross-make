@@ -1,6 +1,6 @@
 CONFIG_SUB_REV = 3d5db9ebe860
 BINUTILS_VER   = 2.32
-GCC_VER        = 9.2.0
+GCC_VER        = ss-9-20190831
 MUSL_VER       = git-6ad514e4e278f0c3b18eb2db1d45638c9af1c07f
 GMP_VER        = 6.1.2
 MPC_VER        = 1.1.0
@@ -81,6 +81,17 @@ $(SOURCES)/%: hashes/%.sha1 | $(SOURCES)
 endif
 
 # Rules for extracting and patching sources, or checking them out from git.
+
+gcc-ss-%:
+	rm -rf $@.tmp
+	mkdir $@.tmp
+	cd $@.tmp && $(DL_CMD) $(notdir $@).tar.xz \
+		"https://gcc.gnu.org/pub/gcc/snapshots/$(subst gcc-ss-,,$(notdir $@))/$(subst ss-,,$(notdir $@)).tar.xz"
+	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).tar.xz.sha1
+	tar -xf $@.tmp/$(notdir $@).tar.xz
+	mv $(subst ss-,,$(notdir $@)) $(notdir $@)
+	touch $(notdir $@)
+	rm -rf $@.tmp
 
 musl-git-%:
 	rm -rf $@.tmp
