@@ -1,35 +1,29 @@
-
-SOURCES = sources
-
 CONFIG_SUB_REV = 3d5db9ebe860
-BINUTILS_VER = 2.32
-GCC_VER = 9.2.0
-MUSL_VER = 1.1.23
-GMP_VER = 6.1.2
-MPC_VER = 1.1.0
-MPFR_VER = 4.0.2
-LINUX_VER = 4.4.190
+BINUTILS_VER   = 2.32
+GCC_VER        = 9.2.0
+MUSL_VER       = git-6ad514e4e278f0c3b18eb2db1d45638c9af1c07f
+GMP_VER        = 6.1.2
+MPC_VER        = 1.1.0
+MPFR_VER       = 4.0.2
+LINUX_VER      = 4.4.190
 
-GNU_SITE = https://ftp.gnu.org/pub/gnu
-GCC_SITE = $(GNU_SITE)/gcc
+GNU_SITE      = https://ftp.gnu.org/pub/gnu
+GCC_SITE      = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
-GMP_SITE = $(GNU_SITE)/gmp
-MPC_SITE = $(GNU_SITE)/mpc
-MPFR_SITE = $(GNU_SITE)/mpfr
-ISL_SITE = http://isl.gforge.inria.fr/
-
-MUSL_SITE = https://www.musl-libc.org/releases
-MUSL_REPO = git://git.musl-libc.org/musl
-
-LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
+GMP_SITE      = $(GNU_SITE)/gmp
+MPC_SITE      = $(GNU_SITE)/mpc
+MPFR_SITE     = $(GNU_SITE)/mpfr
+ISL_SITE      = http://isl.gforge.inria.fr/
+MUSL_SITE     = https://www.musl-libc.org/releases
+LINUX_SITE    = https://cdn.kernel.org/pub/linux/kernel
 
 DL_CMD = curl -fsSL --retry 10 --retry-connrefused -o
 
-HOST = $(if $(NATIVE),$(TARGET))
+SOURCES   = sources
+HOST      = $(if $(NATIVE),$(TARGET))
 BUILD_DIR = build/$(if $(HOST),$(HOST),local)/$(TARGET)
-OUTPUT = $(CURDIR)/output$(if $(HOST),-$(HOST))
-
-REL_TOP = ../../..
+OUTPUT    = $(CURDIR)/output$(if $(HOST),-$(HOST))
+REL_TOP   = ../../..
 
 -include config.mak
 
@@ -47,7 +41,6 @@ clean:
 
 distclean: clean
 	rm -rf sources
-
 
 # Rules for downloading and verifying sources. Treat an external SOURCES path as
 # immutable and do not try to download anything into it.
@@ -70,7 +63,8 @@ $(SOURCES):
 
 $(SOURCES)/config.sub: | $(SOURCES)
 	mkdir -p $@.tmp
-	cd $@.tmp && $(DL_CMD) $(notdir $@) "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+	cd $@.tmp && $(DL_CMD) $(notdir $@) \
+		"http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
 	cd $@.tmp && touch $(notdir $@)
 	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
 	mv $@.tmp/$(notdir $@) $@
@@ -86,14 +80,18 @@ $(SOURCES)/%: hashes/%.sha1 | $(SOURCES)
 
 endif
 
-
 # Rules for extracting and patching sources, or checking them out from git.
 
 musl-git-%:
 	rm -rf $@.tmp
-	git clone -b $(patsubst musl-git-%,%,$@) $(MUSL_REPO) $@.tmp
-	cd $@.tmp && git fsck
-	mv $@.tmp $@
+	mkdir $@.tmp
+	cd $@.tmp && $(DL_CMD) $(notdir $@).tar.gz \
+		"https://git.musl-libc.org/cgit/musl/snapshot/$(subst git-,,$(notdir $@)).tar.gz"
+	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).tar.gz.sha1
+	tar -xf $@.tmp/$(notdir $@).tar.gz
+	mv $(subst git-,,$(notdir $@)) $(notdir $@)
+	touch $(notdir $@)
+	rm -rf $@.tmp
 
 %: $(SOURCES)/%.tar.gz | $(SOURCES)/config.sub
 	rm -rf $@.tmp
@@ -129,7 +127,6 @@ musl-git-%:
 	rm -rf $@.tmp
 
 extract_all: | $(SRC_DIRS)
-
 
 # Rules for building.
 
